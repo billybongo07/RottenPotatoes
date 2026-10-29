@@ -4,7 +4,6 @@ class MoviesController < ApplicationController
   def index
     @all_ratings = Movie.all_ratings
 
-    # Convert ratings to a plain Hash so the view can use it safely
     if params[:ratings].present?
       @ratings = params[:ratings].permit!.to_h
     else

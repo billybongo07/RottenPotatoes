@@ -1,24 +1,26 @@
 class MoviesController < ApplicationController
   before_action :set_movie, only: %i[ show edit update destroy ]
 
-# GET /movies or /movies.json
 def index
-@all_ratings = Movie.all_ratings
+  @all_ratings = Movie.all_ratings
 
-# Persist sort and ratings in the session
-if params[:sort]
-  session[:sort] = params[:sort]
-end
-if params[:ratings]
-  session[:ratings] = params[:ratings]
-end
+  session[:sort] = params[:sort] if params.key?(:sort)
+  session[:ratings] = params[:ratings] if params.key?(:ratings)
 
-if (session[:sort] || session[:ratings]) &&
-    (params[:sort].nil? || params[:ratings].nil?)
-  redirect_to movies_path(
-    sort: session[:sort],
-    ratings: session[:ratings]
-  ) and return
+  if (session[:sort].present? || session[:ratings].present?) &&
+     (!params.key?(:sort) || !params.key?(:ratings))
+    redirect_to movies_path(
+      sort: session[:sort],
+      ratings: session[:ratings]
+    ) and return
+  end
+
+  @sort = session[:sort] || "title"
+  @ratings = session[:ratings] || Hash[@all_ratings.product(["1"])]
+
+  ratings_to_show = @ratings.keys.presence || @all_ratings
+
+  @movies = Movie.where(rating: ratings_to_show).order(@sort)
 end
 
   @sort = session[:sort] || "title"

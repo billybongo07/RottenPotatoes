@@ -2,38 +2,23 @@ class MoviesController < ApplicationController
   before_action :set_movie, only: %i[ show edit update destroy ]
 
   def index
-  @all_ratings = Movie.all_ratings
+    @all_ratings = Movie.all_ratings
 
-  session[:sort] = params[:sort] if params.key?(:sort)
-  if params.key?(:ratings)
-    session[:ratings] = params[:ratings].presence || {}
-  end
+    # Convert ratings to a plain Hash so the view can use it safely
+    if params[:ratings].present?
+      @ratings = params[:ratings].permit!.to_h
+    else
+      @ratings = Hash[@all_ratings.product(["1"])]
+    end
 
-  needs_redirect = false
-  redirect_params = {}
+    # Remember choices in the session
+    session[:sort] = params[:sort] if params[:sort].present?
+    session[:ratings] = @ratings
 
-  if session[:sort].present? && params[:sort].nil?
-    needs_redirect = true
-    redirect_params[:sort] = session[:sort]
-  end
+    @sort = params[:sort] || session[:sort] || "title"
 
-  if session[:ratings] && params[:ratings].nil?
-    needs_redirect = true
-    redirect_params[:ratings] = session[:ratings]
-  end
-
-  if needs_redirect
-    redirect_to movies_path(redirect_params) and return
-  end
-
-  @sort = params[:sort] || "title"
-  if params[:ratings].present?
-    @ratings = params[:ratings]
-  else
-    @ratings = Hash[@all_ratings.product(["1"])]
-  end
-
-  @movies = Movie.where(rating: @ratings.keys).order(@sort)
+    ratings_to_show = @ratings.keys.presence || @all_ratings
+    @movies = Movie.where(rating: ratings_to_show).order(@sort)
   end
 
   def show

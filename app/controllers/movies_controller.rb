@@ -3,8 +3,29 @@ class MoviesController < ApplicationController
 
   # GET /movies or /movies.json
   def index
-    @movies = Movie.all
+  @all_ratings = Movie.all_ratings
+
+  # Persist sort and ratings in the session
+  if params[:sort]
+    session[:sort] = params[:sort]
   end
+  if params[:ratings]
+    session[:ratings] = params[:ratings]
+  end
+
+  if (session[:sort] || session[:ratings]) &&
+     (params[:sort].nil? || params[:ratings].nil?)
+    redirect_to movies_path(
+      sort: session[:sort],
+      ratings: session[:ratings]
+    ) and return
+  end
+
+  @sort = session[:sort] || "title"
+  @ratings = session[:ratings] || Hash[@all_ratings.product(["1"])]
+
+  @movies = Movie.where(rating: @ratings.keys).order(@sort)
+end
 
   # GET /movies/1 or /movies/1.json
   def show

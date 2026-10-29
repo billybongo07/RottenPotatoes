@@ -4,13 +4,51 @@
 
 <h1>Movies</h1>
 
+<%= form_tag movies_path, method: :get do %>
+  <div>
+    Include:
+    <% @all_ratings.each do |rating| %>
+      <%= check_box_tag "ratings[#{rating}]", "1",
+            @ratings.include?(rating),
+            id: "ratings_#{rating}" %>
+      <%= label_tag "ratings_#{rating}", rating %>
+    <% end %>
+    <%= hidden_field_tag "sort", @sort %>
+    <%= submit_tag "Refresh" %>
+  </div>
+<% end %>
+
 <div id="movies">
-  <% @movies.each do |movie| %>
-    <%= render movie %>
-    <p>
-      <%= link_to "Show this movie", movie %>
-    </p>
-  <% end %>
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <%= link_to "Movie Title",
+                movies_path(sort: "title", ratings: @ratings),
+                id: "title_header" %>
+        </th>
+        <th>Rating</th>
+        <th>
+          <%= link_to "Release Date",
+                movies_path(sort: "release_date", ratings: @ratings),
+                id: "release_date_header" %>
+        </th>
+        <th colspan="3"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @movies.each do |movie| %>
+        <tr>
+          <td><%= movie.title %></td>
+          <td><%= movie.rating %></td>
+          <td><%= movie.release_date %></td>
+          <td><%= link_to "Show", movie %></td>
+          <td><%= link_to "Edit", edit_movie_path(movie) %></td>
+          <td><%= button_to "Destroy", movie, method: :delete, data: { turbo_confirm: "Are you sure?" } %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
 </div>
 
 <%= link_to "New movie", new_movie_path %>
